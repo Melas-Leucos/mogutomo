@@ -148,7 +148,7 @@
 
     // ログイン状態の確認と表示切り替え
     async function initAuth() {
-       { data: { session } } = await supabase.auth.getSession();
+       ({ data: { session } } = await supabase.auth.getSession());
       
       if (session) {
         authSection.style.display = 'none';
@@ -170,7 +170,7 @@
         return;
       }
 
-       { data, error } = await supabase.auth.signUp({ email, password });
+      ({ data, error } = await supabase.auth.signUp({ email, password }));
       if (error) {
         authMsg.innerText = '登録エラー: ' + error.message;
       } else {
@@ -184,7 +184,7 @@
        email = document.getElementById('auth-email').value;
        password = document.getElementById('auth-password').value;
 
-       { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      ({ data, error } = await supabase.auth.signInWithPassword({ email, password }));
       if (error) {
         authMsg.innerText = 'ログインエラー: ' + error.message;
       } else {
