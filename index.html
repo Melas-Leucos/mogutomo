@@ -134,10 +134,9 @@
  <script>
     // ★ Supabase設定 ★
     const SUPABASE_URL = 'https://janevcvfkbyzcwyahaekk.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphbmVjdmZrYnl6Y3d5YWhhZWtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMzg3MjksImV4cCI6MjA1NjgxNDcyOX0.eyJpA...（※ここにあなたの長いanonキーを記述）';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphbmV2Y3Zma2J5emN3eWFoZWtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzMzk4OTQsImV4cCI6MjEwNzkxNTg5NH0.S6lDgQxKBqZdGHxiyOWz6Cgy8PmjGQTm0acOzCRKVmA';
 
-    // Supabaseの初期化
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // 要素の取得
     const authSection = document.getElementById('auth-section');
@@ -147,7 +146,7 @@
     // ログイン状態の確認と表示切り替え
     async function initAuth() {
         try {
-            const response = await supabase.auth.getSession();
+            const response = await supabaseClient.auth.getSession();
             const session = response.data ? response.data.session : null;
 
             if (session) {
@@ -166,11 +165,11 @@
     const btnSignup = document.getElementById('btn-signup');
     if (btnSignup) {
         btnSignup.addEventListener('click', async () => {
-            const email = document.getElementById('email')?.value;
-            const password = document.getElementById('password')?.value;
+            const email = document.getElementById('auth-email')?.value;
+            const password = document.getElementById('auth-password')?.value;
             if (authMsg) authMsg.textContent = '登録中...';
 
-            const { data, error } = await supabase.auth.signUp({ email, password });
+            const { error } = await supabaseClient.auth.signUp({ email, password });
 
             if (error) {
                 if (authMsg) authMsg.textContent = '登録エラー: ' + error.message;
@@ -182,28 +181,29 @@
 
     // ログイン処理
     const btnLogin = document.getElementById('btn-login');
-    if (btnLogin) {
-        btnLogin.addEventListener('click', async () => {
-            const email = document.getElementById('email')?.value;
-            const password = document.getElementById('password')?.value;
-            if (authMsg) authMsg.textContent = 'ログイン中...';
+if (btnLogin) {
+    btnLogin.addEventListener('click', async () => {
+        const email = document.getElementById('auth-email')?.value;
+        const password = document.getElementById('auth-password')?.value;
+        if (authMsg) authMsg.textContent = 'ログイン中...';
 
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        // 分割代入を使えず、そのまま結果を受け取る
+        const res = await supabaseClient.auth.signInWithPassword({ email, password });
 
-            if (error) {
-                if (authMsg) authMsg.textContent = 'ログインエラー: ' + error.message;
-            } else {
-                if (authMsg) authMsg.textContent = 'ログイン成功！';
-                initAuth();
-            }
-        });
-    }
+        if (res.error) {
+            if (authMsg) authMsg.textContent = 'ログインエラー: ' + res.error.message;
+        } else {
+            if (authMsg) authMsg.textContent = 'ログイン成功！';
+            initAuth();
+        }
+    });
+}
 
     // ログアウト処理
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
         btnLogout.addEventListener('click', async () => {
-            await supabase.auth.signOut();
+            await supabaseClient.auth.signOut();
             location.reload();
         });
     }
