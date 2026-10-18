@@ -131,75 +131,85 @@
     </div>
   </main>
 
-  <script>
-    // ==========================================
+ <script>
     // ★ Supabase設定 ★
-    // ==========================================
-     SUPABASE_URL = 'https://janevcvfkbyzcwyahaekk.supabase.co';
-     SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphbmV2Y3Zma2J5emN3eWFoZWtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzMzk4OTQsImV4cCI6MjEwNzkxNTg5NH0.S6lDgQxKBqZdGHxiyOWz6Cgy8PmjGQTm0acOzCRKVmAblishable_0cG_AZm-_KtKXl-jwgIaAw_wdSx7FgH';
+    const SUPABASE_URL = 'https://janevcvfkbyzcwyahaekk.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphbmVjdmZrYnl6Y3d5YWhhZWtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMzg3MjksImV4cCI6MjA1NjgxNDcyOX0.eyJpA...（※ここにあなたの長いanonキーを記述）';
 
     // Supabaseの初期化
-     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // 要素の取得
-     authSection = document.getElementById('auth-section');
-     appSection = document.getElementById('app-section');
-     authMsg = document.getElementById('auth-msg');
+    const authSection = document.getElementById('auth-section');
+    const appSection = document.getElementById('app-section');
+    const authMsg = document.getElementById('auth-msg');
 
     // ログイン状態の確認と表示切り替え
     async function initAuth() {
-       ({ data: { session } } = await supabase.auth.getSession());
-      
-      if (session) {
-        authSection.style.display = 'none';
-        appSection.style.display = 'block';
-      } else {
-        authSection.style.display = 'block';
-        appSection.style.display = 'none';
-      }
+        try {
+            const response = await supabase.auth.getSession();
+            const session = response.data ? response.data.session : null;
+
+            if (session) {
+                if (authSection) authSection.style.display = 'none';
+                if (appSection) appSection.style.display = 'block';
+            } else {
+                if (authSection) authSection.style.display = 'block';
+                if (appSection) appSection.style.display = 'none';
+            }
+        } catch (err) {
+            console.error('InitAuth Error:', err);
+        }
     }
 
     // 新規登録処理
-    document.getElementById('btn-signup').addEventListener('click', async () => {
-      authMsg.innerText = '';
-       email = document.getElementById('auth-email').value;
-       password = document.getElementById('auth-password').value;
+    const btnSignup = document.getElementById('btn-signup');
+    if (btnSignup) {
+        btnSignup.addEventListener('click', async () => {
+            const email = document.getElementById('email')?.value;
+            const password = document.getElementById('password')?.value;
+            if (authMsg) authMsg.textContent = '登録中...';
 
-      if (!email || !password) {
-        authMsg.innerText = 'メールアドレスとパスワードを入力してください。';
-        return;
-      }
+            const { data, error } = await supabase.auth.signUp({ email, password });
 
-      ({ data, error } = await supabase.auth.signUp({ email, password }));
-      if (error) {
-        authMsg.innerText = '登録エラー: ' + error.message;
-      } else {
-        alert('登録案内メールを送信しました。メールを確認して承認してください。');
-      }
-    });
+            if (error) {
+                if (authMsg) authMsg.textContent = '登録エラー: ' + error.message;
+            } else {
+                if (authMsg) authMsg.textContent = '登録成功！確認メールをチェックしてください。';
+            }
+        });
+    }
 
     // ログイン処理
-    document.getElementById('btn-login').addEventListener('click', async () => {
-      authMsg.innerText = '';
-       email = document.getElementById('auth-email').value;
-       password = document.getElementById('auth-password').value;
+    const btnLogin = document.getElementById('btn-login');
+    if (btnLogin) {
+        btnLogin.addEventListener('click', async () => {
+            const email = document.getElementById('email')?.value;
+            const password = document.getElementById('password')?.value;
+            if (authMsg) authMsg.textContent = 'ログイン中...';
 
-      ({ data, error } = await supabase.auth.signInWithPassword({ email, password }));
-      if (error) {
-        authMsg.innerText = 'ログインエラー: ' + error.message;
-      } else {
-        location.reload();
-      }
-    });
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                if (authMsg) authMsg.textContent = 'ログインエラー: ' + error.message;
+            } else {
+                if (authMsg) authMsg.textContent = 'ログイン成功！';
+                initAuth();
+            }
+        });
+    }
 
     // ログアウト処理
-    document.getElementById('btn-logout').addEventListener('click', async () => {
-      await supabase.auth.signOut();
-      location.reload();
-    });
+    const btnLogout = document.getElementById('btn-logout');
+    if (btnLogout) {
+        btnLogout.addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            location.reload();
+        });
+    }
 
     // 起動時に認証チェック実行
-    initAuth();
-  </script>
-</body>
-</html>
+    document.addEventListener('DOMContentLoaded', () => {
+        initAuth();
+    });
+</script>
