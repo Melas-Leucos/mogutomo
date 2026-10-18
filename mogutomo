@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fff5f8">
+  <title>もぐとも｜食事記録</title>
+
+  <!-- Supabase JS ライブラリ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --pink: #f5c6d9;
+      --pink2: #fff0f5;
+      --mint: #cceee1;
+      --lav: #e9e1fa;
+      --ink: #554b59;
+      --white: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: linear-gradient(150deg, #fff5f8, #f3f0ff 65%, #ebfbf5);
+      color: var(--ink);
+      font-family: system-ui, apple-system, sans-serif;
+      padding: 16px;
+    }
+    header { text-align: center; margin-bottom: 20px; }
+    header h1 { margin: 0; font-size: 24px; }
+    header p { margin: 4px 0 0; font-size: 14px; opacity: 0.8; }
+    .wrap { max-width: 500px; margin: 0 auto; }
+    .card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .card h2 { margin-top: 0; font-size: 18px; border-bottom: 2px solid var(--pink); padding-bottom: 6px; }
+    .field { margin-bottom: 12px; }
+    label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 4px; }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+    }
+    button {
+      background: var(--pink);
+      color: var(--ink);
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.8; }
+    .muted { font-size: 12px; opacity: 0.7; }
+    .stats { font-size: 14px; font-weight: bold; margin-top: 8px; }
+    .foot { text-align: center; font-size: 12px; opacity: 0.6; margin-top: 24px; }
+  </style>
+</head>
+<body>
+
+  <header class="wrap">
+    <h1>🍱 もぐとも</h1>
+    <p>毎日の食事を気楽に記録！</p>
+  </header>
+
+  <main class="wrap">
+    <!-- 認証セクション (未ログイン時に表示) -->
+    <div id="auth-section" class="card">
+      <h2>ログイン / 新規登録</h2>
+      <div class="field">
+        <label for="auth-email">メールアドレス</label>
+        <input type="email" id="auth-email" placeholder="example@email.com">
+      </div>
+      <div class="field">
+        <label for="auth-password">パスワード</label>
+        <input type="password" id="auth-password" placeholder="6文字以上">
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 16px;">
+        <button id="btn-login" style="flex: 1;">ログイン</button>
+        <button id="btn-signup" style="flex: 1; background: var(--lav);">新規登録</button>
+      </div>
+      <p id="auth-msg" style="color: #e74c3c; font-size: 12px; margin-top: 8px; text-align: center;"></p>
+    </div>
+
+    <!-- アプリ本体 (ログイン完了時に表示) -->
+    <div id="app-section" style="display: none;">
+      <div style="text-align: right; margin-bottom: 8px;">
+        <button id="btn-logout" style="width: auto; padding: 4px 12px; font-size: 12px; background: #eee;">ログアウト</button>
+      </div>
+
+      <section class="card">
+        <h2>今日の記録</h2>
+        <input class="date" type="date" id="date">
+        <p id="dateLabel" class="muted"></p>
+        <div class="stats" id="stats"></div>
+      </section>
+
+      <section class="card">
+        <h2>🍽 食事を記録する</h2>
+        <form id="mealForm">
+          <div class="field">
+            <label for="mealTime">食事の時間帯</label>
+            <select class="field" id="mealTime">
+              <option value="朝食">朝食</option>
+              <option value="昼食">昼食</option>
+              <option value="夕食">夕食</option>
+              <option value="間食">間食</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="mealContent">食べたもの</label>
+            <input type="text" id="mealContent" placeholder="例: おにぎり、味噌汁">
+          </div>
+          <div class="field">
+            <label for="calories">概算カロリー (kcal)</label>
+            <input type="number" id="calories" placeholder="例: 450">
+          </div>
+          <button type="submit" id="saveBtn">記録する</button>
+        </form>
+      </section>
+    </div>
+
+    <div class="foot">
+      もぐとも ☁ 記録はクラウドに保存されます。
+    </div>
+  </main>
+
+  <script>
+    // ==========================================
+    // ★ Supabase設定 ★
+    // ==========================================
+    const SUPABASE_URL = 'https://janevcvfkbyzcwyahaekk.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_0cG_AZm-_KtKXl-jwgIaAw_wdSx7FgH';
+
+    // Supabaseの初期化
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // 要素の取得
+    const authSection = document.getElementById('auth-section');
+    const appSection = document.getElementById('app-section');
+    const authMsg = document.getElementById('auth-msg');
+
+    // ログイン状態の確認と表示切り替え
+    async function initAuth() {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        authSection.style.display = 'none';
+        appSection.style.display = 'block';
+      } else {
+        authSection.style.display = 'block';
+        appSection.style.display = 'none';
+      }
+    }
+
+    // 新規登録処理
+    document.getElementById('btn-signup').addEventListener('click', async () => {
+      authMsg.innerText = '';
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+
+      if (!email || !password) {
+        authMsg.innerText = 'メールアドレスとパスワードを入力してください。';
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        authMsg.innerText = '登録エラー: ' + error.message;
+      } else {
+        alert('登録案内メールを送信しました。メールを確認して承認してください。');
+      }
+    });
+
+    // ログイン処理
+    document.getElementById('btn-login').addEventListener('click', async () => {
+      authMsg.innerText = '';
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        authMsg.innerText = 'ログインエラー: ' + error.message;
+      } else {
+        location.reload();
+      }
+    });
+
+    // ログアウト処理
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      location.reload();
+    });
+
+    // 起動時に認証チェック実行
+    initAuth();
+  </script>
+</body>
+</html>
