@@ -135,20 +135,20 @@
     // ==========================================
     // ★ Supabase設定 ★
     // ==========================================
-    const SUPABASE_URL = 'https://janevcvfkbyzcwyahaekk.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_0cG_AZm-_KtKXl-jwgIaAw_wdSx7FgH';
+     SUPABASE_URL = 'https://janevcvfkbyzcwyahaekk.supabase.co';
+     SUPABASE_KEY = 'sb_publishable_0cG_AZm-_KtKXl-jwgIaAw_wdSx7FgH';
 
     // Supabaseの初期化
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // 要素の取得
-    const authSection = document.getElementById('auth-section');
-    const appSection = document.getElementById('app-section');
-    const authMsg = document.getElementById('auth-msg');
+     authSection = document.getElementById('auth-section');
+     appSection = document.getElementById('app-section');
+     authMsg = document.getElementById('auth-msg');
 
     // ログイン状態の確認と表示切り替え
     async function initAuth() {
-      const { data: { session } } = await supabase.auth.getSession();
+       { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
         authSection.style.display = 'none';
@@ -162,15 +162,15 @@
     // 新規登録処理
     document.getElementById('btn-signup').addEventListener('click', async () => {
       authMsg.innerText = '';
-      const email = document.getElementById('auth-email').value;
-      const password = document.getElementById('auth-password').value;
+       email = document.getElementById('auth-email').value;
+       password = document.getElementById('auth-password').value;
 
       if (!email || !password) {
         authMsg.innerText = 'メールアドレスとパスワードを入力してください。';
         return;
       }
 
-      const { data, error } = await supabase.auth.signUp({ email, password });
+       { data, error } = await supabase.auth.signUp({ email, password });
       if (error) {
         authMsg.innerText = '登録エラー: ' + error.message;
       } else {
@@ -181,10 +181,10 @@
     // ログイン処理
     document.getElementById('btn-login').addEventListener('click', async () => {
       authMsg.innerText = '';
-      const email = document.getElementById('auth-email').value;
-      const password = document.getElementById('auth-password').value;
+       email = document.getElementById('auth-email').value;
+       password = document.getElementById('auth-password').value;
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+       { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         authMsg.innerText = 'ログインエラー: ' + error.message;
       } else {
